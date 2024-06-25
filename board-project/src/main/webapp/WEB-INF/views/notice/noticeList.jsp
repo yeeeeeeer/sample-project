@@ -23,6 +23,8 @@
 					<th>조회수</th>
 					<th width="100px">작성일</th>
 				</tr>
+				<!-- 각각의 공지사항 정보를 테이블 형태로 반복 출력 -->
+				<!-- var: 반복 중 사용할 각 요소를 지칭하는 변수?! -->
 				<c:forEach items="${ noticeList }" var="notice">
 					<tr>
 						<td><c:out value="${ notice.no }"/></td>

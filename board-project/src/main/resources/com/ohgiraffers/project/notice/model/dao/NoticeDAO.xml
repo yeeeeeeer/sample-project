@@ -4,8 +4,14 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ohgiraffers.project.notice.model.dao.NoticeDAO">
 
+	<!-- resultMap - mybatis sql 쿼리 결과를 noticeDTO 객체로 변환하는 방법을 정의함 -->
+	<!-- type: 매핑할 클래스 / id: 이 resultMap의 식별자 이름 -->
 	<resultMap type="com.ohgiraffers.project.notice.model.dto.NoticeDTO" id="noticeResultMap">
-		<id property="no" column="NOTICE_NO"/>
+		<!-- property(DTO 필드 이름) - column(DB테이블의 열 이름) 둘이를 매핑한거임 -->
+		<!-- id 태그 : 기본키
+			 result 태그 : 일반 필드
+			 association 태그 : 연관된 객체 -->
+		<id property="no" column="NOTICE_NO"/>    <!-- column은 열 이름 -->
 		<result property="title" column="NOTICE_TITLE"/>
 		<result property="body" column="NOTICE_BODY"/>
 		<result property="writerMemberNo" column="NOTICE_WRITER_MEMBER_NO"/>
@@ -28,7 +34,10 @@
 		<result property="status" column="MEMBER_STATUS"/>
 	</resultMap>
 
+	<!-- 쿼리를 통해 공지사항 목록 조회하는 매핑을 정의 -->
+	<!-- id: 매퍼 파일에서 sql쿼리 호출하기위한 식별자 / resultMap: 쿼리 결과를 매핑할 자바객체?  -->
 	<select id="selectAllNoticeList" resultMap="noticeResultMap">
+		<!-- 이 쿼리는 NoticeDAO 클래스의 selectAllNoticeList() 메소드에서 호출됨을 의미 -->
         SELECT /* com.ohgiraffers.project.notice.model.dao.NoticeDAO#selectAllNoticeList() */
                A.NOTICE_NO
              , A.NOTICE_TITLE
@@ -38,32 +47,47 @@
              , A.NOTICE_COUNT
              , A.CREATED_DATE
          FROM TBL_NOTICE A
+         <!-- 조인: 공지사항작성자 회원번호 == 회원번호 : 공지사항 작성자 닉네임을 가져옴
+              -> 작성자 닉네임을 보여주기위해 조인한것임 -->
          JOIN TBL_MEMBER B ON (A.NOTICE_WRITER_MEMBER_NO = B.MEMBER_NO)
+        <!-- 조건: 공지사항의 상태가 'Y'인 행만 조회할거임 -->
         WHERE A.NOTICE_STATUS = 'Y'
+        <!-- 정렬: 공지사항 번호 기준 내림차순 (최신이 먼저 조회됨) -->
         ORDER BY A.NOTICE_NO DESC
 	</select>
 	
+	<!-- insert: 새로운 데이터를 db에 삽입 / id: 쿼리 호출될때 사용되는 고유 식별자?-->
 	<insert id="insertNotice">
+		<!-- 해당 쿼리는 NoticeDAO클래스의 insertNotice() 메소드에서 호출됨을 의미 -->
         INSERT /* com.ohgiraffers.project.notice.model.dao.NoticeDAO#insertNotice() */
+          <!-- into: tbl_notice에 삽입하겠다를 의미 -->
           INTO TBL_NOTICE
         (
+          <!-- tbl_notice의 열 이름으로 작성하기 -->
           NOTICE_TITLE
         , NOTICE_BODY
         , NOTICE_WRITER_MEMBER_NO
         )
+        <!-- values: 삽입할 값을 지정 -->
         VALUES
         (
+          <!-- #{}: 메소드 호출 시 전달된 파라미터값을 sql쿼리에 삽입함 -->
           #{ title }
         , #{ body }
         , #{ writerMemberNo }
         )
 	</insert>
 	
+	<!-- update: 변경 / id: 이 쿼리 호출될때 사용되는 식별자 지정 -->
 	<update id="incrementNoticeCount">
+		<!-- update: 기존 데이터 변경 / 이 쿼리는 NoticeDAO 클래스의 incrementNoticeCount() 메소드에서 호출됨을 의미 -->
         UPDATE /* com.ohgiraffers.project.notice.model.dao.NoticeDAO#incrementNoticeCount() */
+        	   <!-- tbl_notice: 업데이트할 테이블의 이름 -->
         	   TBL_NOTICE
+           <!-- set: 업데이트할 열, 값을 지정 -->
            SET NOTICE_COUNT = (SELECT  A.COUNT 
          						 FROM  (
+         						 		<!-- 서브쿼리: 특정 공지사항의 현재 조회수를 가져옴 -->
          						 		SELECT NOTICE_COUNT COUNT 
         						 		  FROM TBL_NOTICE 
         						 		 WHERE notice_no = #{ no }
@@ -72,6 +96,7 @@
          WHERE NOTICE_NO = #{ no }
 	</update>
 	
+	<!-- select / id: 쿼리 호출될때 사용된느 식별자 / resultMap: 쿼리 결과 매핑할 식별자 -->
 	<select id="selectNoticeDetail" resultMap="noticeResultMap">
         SELECT
                A.NOTICE_NO
